@@ -1,12 +1,11 @@
 
-from langchain_core.output_parsers import PydanticOutputParser, OutputFixingParser
-from langchain_openai import ChatOpenAI
+from langchain_core.output_parsers import PydanticOutputParser
+from langchain_classic.output_parsers import OutputFixingParser
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.prompts import PromptTemplate
 from langchain_openai.llms import OpenAI
 from langchain_community.document_loaders import TextLoader
-from langchain_core.vectorstores import FAISS
-from langchain.embeddings import OpenAIEmbeddings
-from langchain_core.output_parsers import PydanticOutputParser, OutputFixingParser
+from langchain_community.vectorstores import FAISS
 from pydantic import BaseModel, Field
 from typing import List
 
@@ -21,11 +20,26 @@ class Answer(BaseModel):
 # 2. 初始化基础解析器
 base_parser = PydanticOutputParser(pydantic_object=Answer)
 
-# 3. 初始化LLM
-llm = ChatOpenAI(model="gpt-3.5-turbo")
+# 3. 初始化LLM（延迟创建：新版 langchain-openai 会在构造时校验 API 凭证，避免导入即报错）
+_llm = None
 
-# 4. 自动修复解析器（新版正确写法）
-output_parser = OutputFixingParser.from_llm(parser=base_parser, llm=llm)
+
+def _get_llm():
+    global _llm
+    if _llm is None:
+        _llm = ChatOpenAI(model="gpt-3.5-turbo")
+    return _llm
+
+
+# 4. 自动修复解析器（新版正确写法，延迟创建）
+_output_parser = None
+
+
+def _get_output_parser():
+    global _output_parser
+    if _output_parser is None:
+        _output_parser = OutputFixingParser.from_llm(parser=base_parser, llm=_get_llm())
+    return _output_parser
 
 
 class EnterpriseQASystem:
@@ -89,18 +103,17 @@ class EnterpriseQASystem:
                 "回答："
             ),
             input_variables=["question", "context"],
-            partial_variables={"format_instructions": output_parser.get_format_instructions()}
+            partial_variables={"format_instructions": _get_output_parser().get_format_instructions()}
         )
 
         prompt = prompt_template.format(question=query, context=combined_docs)
 
         # 生成响应并使用自动修复解析器
-        # raw_response = self.llm(prompt)
-        raw_response = self.llm
+        raw_response = self.llm(prompt)
         print("\n模型原始输出:\n", raw_response)
 
         # 使用解析器格式化输出
-        structured_answer = output_parser.parse(raw_response)
+        structured_answer = _get_output_parser().parse(raw_response)
 
         # 输出最终结果
         print("\n解析后的结构化结果:")

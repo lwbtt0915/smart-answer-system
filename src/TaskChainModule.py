@@ -1,10 +1,12 @@
 # 导入必要模块
-from langchain_community.chains import SequentialChain, LLMChain
+from langchain_classic.chains import SequentialChain, LLMChain
 from langchain_community.llms import OpenAI
 from langchain_core.prompts import PromptTemplate
-from langchain_community.callbacks import FileCallbackHandler
 
-import DebugCallbackHandler
+try:
+    from src import DebugCallbackHandler
+except ImportError:
+    import DebugCallbackHandler
 
 
 # 任务链模块
@@ -24,28 +26,28 @@ class TaskChainModule:
             template="请分析以下问题，并指出问题的主题和需要的详细信息。\n问题: {query}",
             input_variables=["query"]
         )
-        question_chain = LLMChain(llm=self.llm, prompt=question_template, callback_handler=self.debug_handler)
+        question_chain = LLMChain(llm=self.llm, prompt=question_template, output_key="theme", callbacks=[self.debug_handler])
 
         # 子任务2：根据主题搜索相似内容
         search_template = PromptTemplate(
             template="根据主题'{theme}'，从企业知识库中寻找相关信息，并提供简要概述。",
             input_variables=["theme"]
         )
-        search_chain = LLMChain(llm=self.llm, prompt=search_template, callback_handler=self.debug_handler)
+        search_chain = LLMChain(llm=self.llm, prompt=search_template, output_key="summary", callbacks=[self.debug_handler])
 
         # 子任务3：生成最终的回答格式
         answer_template = PromptTemplate(
             template="将以下信息格式化为企业问答回答:\n问题: {query}\n主题: {theme}\n内容概述: {summary}",
             input_variables=["query", "theme", "summary"]
         )
-        answer_chain = LLMChain(llm=self.llm, prompt=answer_template, callback_handler=self.debug_handler)
+        answer_chain = LLMChain(llm=self.llm, prompt=answer_template, output_key="final_answer", callbacks=[self.debug_handler])
 
         # 创建多层任务链
         task_chain = SequentialChain(
             chains=[question_chain, search_chain, answer_chain],
             input_variables=["query"],
             output_variables=["final_answer"],
-            callback_handler=self.debug_handler
+            callbacks=[self.debug_handler]
         )
         return task_chain
 

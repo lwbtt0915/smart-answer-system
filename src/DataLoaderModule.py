@@ -1,5 +1,5 @@
 # 导入必要模块
-from langchain_community.document_loaders import DirectoryLoader, JSONLoader, MarkdownLoader
+from langchain_community.document_loaders import DirectoryLoader, JSONLoader, TextLoader
 from langchain_text_splitters import CharacterTextSplitter
 
 
@@ -27,16 +27,16 @@ class  DataLoaderModule:
         print(f"加载的文本文件数：{len(raw_documents)}")
 
     def load_json_documents(self, json_path):
-        """加载JSON文件"""
-        loader = JSONLoader(file_path=json_path)
+        """加载JSON文件（新版 JSONLoader 需显式指定 jq_schema）"""
+        loader = JSONLoader(file_path=json_path, jq_schema=".[]")
         json_documents = loader.load()
         split_docs = self.text_splitter.split_documents(json_documents)
         self.documents.extend(split_docs)
         print(f"加载的JSON文件条目数：{len(json_documents)}")
 
     def load_markdown_documents(self, markdown_path):
-        """加载Markdown文件"""
-        loader = MarkdownLoader(file_path=markdown_path)
+        """加载Markdown文件（新版 langchain-community 已移除 MarkdownLoader，改用 TextLoader）"""
+        loader = TextLoader(file_path=markdown_path)
         markdown_documents = loader.load()
         split_docs = self.text_splitter.split_documents(markdown_documents)
         self.documents.extend(split_docs)

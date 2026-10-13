@@ -1,9 +1,7 @@
 
 # 导入必要模块
-from langchain.agents import ReActAgent, ZeroShotAgent, AgentExecutor
 from langchain_openai.llms import OpenAI
 from langchain_core.prompts import PromptTemplate
-from langchain.embeddings import OpenAIEmbeddings
 # ReAct Agent定义
 class ReActAgentSystem:
     def __init__(self, document_storage):

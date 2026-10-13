@@ -4,7 +4,12 @@ from langchain_core.prompts import PromptTemplate
 from langchain_openai import OpenAI
 from langchain_core.output_parsers import PydanticOutputParser
 
-import EnterpriseQASystem
+try:
+    from src import EnterpriseQASystem
+except ImportError:
+    import EnterpriseQASystem
+
+Answer = EnterpriseQASystem.Answer
 
 
 class PromptEngineeringModule:
@@ -16,7 +21,7 @@ class PromptEngineeringModule:
         self.llm = OpenAI()
 
         # 自定义输出解析器
-        self.parser = PydanticOutputParser(pydantic_object=Answer.Answer)
+        self.parser = PydanticOutputParser(pydantic_object=Answer)
 
     def create_prompt_template(self, query: str) -> str:
         """

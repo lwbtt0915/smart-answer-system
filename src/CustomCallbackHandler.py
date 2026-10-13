@@ -1,19 +1,21 @@
 
 # 导入必要模块
-from langchain_community.chains import SequentialChain, LLMChain
+from langchain_classic.chains import SequentialChain, LLMChain
 from langchain_core.prompts import PromptTemplate
+from langchain_core.callbacks import BaseCallbackHandler
 from langchain_openai.llms import OpenAI
 from typing import Any, Dict
 import datetime
 import os
 
 # 自定义回调处理程序
-class CustomCallbackHandler:
+class CustomCallbackHandler(BaseCallbackHandler):
     def __init__(self, log_dir="logs"):
         """
         初始化自定义回调处理程序。
         :param log_dir: 日志文件存储目录
         """
+        super().__init__()
         self.log_dir = log_dir
         os.makedirs(self.log_dir, exist_ok=True)
         self.log_file = os.path.join(self.log_dir, "chain_execution_log.txt")
@@ -23,15 +25,16 @@ class CustomCallbackHandler:
         with open(self.log_file, "a") as f:
             f.write(f"{datetime.datetime.now()} - {event}\n")
 
-    def on_chain_start(self, chain_name: str, inputs: Dict[str, Any]):
-        """记录任务链启动事件"""
+    def on_chain_start(self, serialized: Any, inputs: Dict[str, Any], **kwargs: Any):
+        """记录任务链启动事件（兼容新版回调签名）"""
+        chain_name = serialized.get("name", "未知任务链") if isinstance(serialized, dict) else serialized
         self._log_event(f"启动任务链: {chain_name}\n输入: {inputs}")
 
-    def on_chain_end(self, outputs: Dict[str, Any]):
+    def on_chain_end(self, outputs: Dict[str, Any], **kwargs: Any):
         """记录任务链结束事件"""
         self._log_event(f"任务链结束\n输出: {outputs}\n")
 
-    def on_chain_error(self, error: Exception):
+    def on_chain_error(self, error: Exception, **kwargs: Any):
         """记录任务链错误事件"""
         self._log_event(f"任务链发生错误: {str(error)}\n")
 
@@ -57,7 +60,8 @@ class DebuggableTaskChain:
         question_chain = LLMChain(
             llm=self.llm,
             prompt=question_prompt,
-            callback_handler=self.callback_handler
+            output_key="theme",
+            callbacks=[self.callback_handler]
         )
 
         # 子任务2：文档搜索
@@ -68,7 +72,8 @@ class DebuggableTaskChain:
         search_chain = LLMChain(
             llm=self.llm,
             prompt=search_prompt,
-            callback_handler=self.callback_handler
+            output_key="summary",
+            callbacks=[self.callback_handler]
         )
 
         # 子任务3：格式化回答
@@ -79,7 +84,8 @@ class DebuggableTaskChain:
         format_chain = LLMChain(
             llm=self.llm,
             prompt=format_prompt,
-            callback_handler=self.callback_handler
+            output_key="final_answer",
+            callbacks=[self.callback_handler]
         )
 
         # 创建任务链
@@ -87,7 +93,7 @@ class DebuggableTaskChain:
             chains=[question_chain, search_chain, format_chain],
             input_variables=["query"],
             output_variables=["final_answer"],
-            callback_handler=self.callback_handler
+            callbacks=[self.callback_handler]
         )
 
         return task_chain

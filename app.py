@@ -27,7 +27,7 @@ callback_handler = CustomCallbackHandler.CustomCallbackHandler()
 task_chain = CustomCallbackHandler.DebuggableTaskChain(callback_handler=callback_handler)
 
 print("初始化企业级Agent系统...")
-enterprise_agent = EnterpriseAgentSystem.EnterpriseAgentSystem(document_directory="./data")
+enterprise_agent = EnterpriseAgentSystem.EnterpriseAgentSystem(document_directory="./data/enterprise_docs")
 
 # 定义API接口
 

@@ -1,9 +1,7 @@
 # 导入必要模块
-from langchain.agents import ReActAgent, ZeroShotAgent, AgentExecutor
-
 from langchain_community.document_loaders import TextLoader
 from langchain_community.vectorstores import FAISS
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 
 
 # 定义文档存储模块

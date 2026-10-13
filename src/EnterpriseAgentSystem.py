@@ -1,9 +1,10 @@
 # 导入必要模块
-from langchain.agents import ReActAgent, ZeroShotAgent, AgentExecutor
-from langchain.embeddings import OpenAIEmbeddings
-
-import DocumentStorage
-from src import ZeroShotAgentSystem, ReActAgentSystem
+try:
+    from src import DocumentStorage, ZeroShotAgentSystem, ReActAgentSystem
+except ImportError:
+    import DocumentStorage
+    import ZeroShotAgentSystem
+    import ReActAgentSystem
 
 
 # 集成Agent执行系统

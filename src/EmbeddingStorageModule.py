@@ -5,7 +5,10 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 import os
 
-from DataLoaderModule import DataLoaderModule
+try:
+    from src.DataLoaderModule import DataLoaderModule
+except ImportError:
+    from DataLoaderModule import DataLoaderModule
 
 
 
